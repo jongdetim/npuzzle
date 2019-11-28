@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/11/26 19:44:45 by tide-jon      ########   odam.nl          #
+#    Updated: 2019/11/28 23:05:26 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -36,6 +36,7 @@ class	State():
 		self.state = matrix
 		self.parent = 0
 		self.h = manhattan_distance(matrix, puzzle)
+		self.g = 0
 
 def	manhattan_distance(state, puzzle):
 	h = 0
@@ -57,8 +58,8 @@ print (start_state.h)
 
 # heap tests
 openset = []
-heapq.heappush(openset, (start_state.h, start_state))
-heapq.heappush(openset, (another_state.h, another_state))
+heapq.heappush(openset, (start_state.g + start_state.h, start_state))
+heapq.heappush(openset, (start_state.g + another_state.h, another_state))
 
 print (heapq.heappop(openset))
 print (heapq.heappop(openset))
@@ -68,6 +69,34 @@ closedset = {}
 #	check to see if a state has been seen before. if not; adds state to closedset and openset
 
 # thing = tuple(tuple(item) for item in start_state)
-if not closedset.get(start_state):
-	closedset[start_state] = 1
+if not closedset.get(tuple(tuple(line) for line in start_state.state)):
+	closedset[tuple(tuple(line) for line in start_state.state)] = start_state.h + start_state.g
 	heapq.heappush(openset, start_state.h)
+
+#implementation of a* algorithm:
+
+'''
+def a_star_search(graph, start, goal):
+    frontier = PriorityQueue()
+    frontier.put(start, 0)
+    came_from = {}
+    cost_so_far = {}
+    came_from[start] = None
+    cost_so_far[start] = 0
+    
+    while not frontier.empty():
+        current = frontier.get()
+        
+        if current == goal:
+            break
+        
+        for next in graph.neighbors(current):
+            new_cost = cost_so_far[current] + graph.cost(current, next)
+            if next not in cost_so_far or new_cost < cost_so_far[next]:
+                cost_so_far[next] = new_cost
+                priority = new_cost + heuristic(goal, next)
+                frontier.put(next, priority)
+                came_from[next] = current
+    
+    return came_from, cost_so_far
+'''
