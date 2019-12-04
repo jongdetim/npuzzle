@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/11/29 19:22:49 by tide-jon      ########   odam.nl          #
+#    Updated: 2019/12/04 16:29:49 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,11 @@ import copy
 
 #	move cost G
 G = 1
+
+#	performance tracking
+TIME = 0
+SPACE = 0
+MOVES = 0
 
 class	Puzzle():
 
@@ -35,7 +40,6 @@ class	Puzzle():
 			for x, _ in enumerate(goal_array[y]):
 				self.goal[goal_array[y][x]] = (y, x)
 
-
 class	State():
 
 	def __init__(self, matrix, puzzle):
@@ -53,8 +57,27 @@ class	State():
 					return y, x
 				x += 1
 			y += 1
-
-
+	
+	def can_be_solved(self):
+		inversions = 0
+		zero_row = 0
+		for y, _ in enumerate(self.state):
+			for x, item in enumerate(self.state[y]):
+				if item == 0:
+					zero_row = y
+				x2, y2 = x, y
+				while y2 < puzzle.size:
+					while x2 < puzzle.size:
+						if self.state[y2][x2] < item and self.state[y2][x2] is not 0:
+							inversions += 1
+						x2 += 1
+					y2 += 1
+					x2 = 0
+		if (puzzle.size % 2 == 1 and inversions % 2 == 0) or \
+			(puzzle.size % 2 == 0 and inversions % 2 is not zero_row % 2):
+			return True
+		return False
+		
 
  #	function to generate and return neighbour states
  #	<replace array structures for NumPy arrays for better memory and time usage>
@@ -90,8 +113,9 @@ def	manhattan_distance(state, puzzle):
 	h = 0
 	for y, _ in enumerate(state):
 		for x, _ in enumerate(state[y]):
-			y2, x2 = puzzle.goal[state[y][x]]
-			h += abs(x - x2) + abs(y - y2)
+			if state[y][x] is not 0:
+				y2, x2 = puzzle.goal[state[y][x]]
+				h += abs(x - x2) + abs(y - y2)
 	return h
 
 #	implementation of a* algorithm:
@@ -101,16 +125,19 @@ def a_star_search(puzzle, start):
 	closedset = {}
 	heapq.heappush(openset, (start.g + start.h, id(start), start))
 	closedset[get_tuple(start.state)] = start.g
+	global TIME
+	global SPACE
 
 	while len(openset) > 0:
 		current = heapq.heappop(openset)[2]
+		TIME += 1
 
 		if current.h == 0:
 			return current
 		
-		if current is not start and current.parent.h == 2: # this only works with the manhattan distance heuristic
-			print ("can't be solved")
-			return None
+		# if current is not start and current.parent.h == 2 and not current.h < 2: # this only works with the manhattan distance heuristic
+		# 	print ("can't be solved")
+		# 	return None
 
 		for matrix in current.get_neighbours():
 			move = State(matrix, puzzle)
@@ -120,22 +147,45 @@ def a_star_search(puzzle, start):
 				closedset[key] = move.g
 				heapq.heappush(openset, (move.g + move.h, id(move), move))
 				move.parent = current
-
-		# print (np.matrix(current.state))
+				SPACE += 1
 
 	print ("can't be solved")
 	return None
 
+def	print_solution(solution, start):
+	global MOVES
+	if solution is not start:
+		MOVES += 1
+		print_solution(solution.parent, start)
+	print (np.matrix(solution.state))
+	print ()
 
 #	testing
 
-size = 4
-puzzle = Puzzle(size)
+puzzle = Puzzle(4)
 puzzle.get_goal()
+# start = State([[2, 1, 3], [4, 5, 6], [7, 0, 8]], puzzle)
+start = State([[0, 1, 2, 4], [12, 13, 3, 5], [11, 15, 14, 8], [10, 9, 7, 6]], puzzle)
 
-start_state = State([[2, 1, 3], [4, 5, 6], [7, 0, 8]], puzzle)
-another_state = State([[0, 2, 1, 4], [12, 13, 3, 5], [11, 15, 14, 8], [10, 9, 7, 6]], puzzle)
 
-test = a_star_search(puzzle, another_state)
-if not test == None:
-	print (np.matrix(test.state))
+#	we first check if the starting state is solveable
+
+if not start.can_be_solved():
+	print ("can't be solved")
+	quit()
+
+
+#	execute the algorithm
+
+solution = a_star_search(puzzle, start)
+
+
+#	output
+
+# while solution is not start:
+# 	print (np.matrix(solution.state))
+# 	MOVES += 1
+# 	solution = solution.parent
+print_solution(solution, start)
+# print (np.matrix(solution.state))
+print ("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
