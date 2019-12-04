@@ -6,11 +6,11 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/12/04 16:29:49 by tide-jon      ########   odam.nl          #
+#    Updated: 2019/12/04 17:52:29 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
-import numpy as np
+from numpy import matrix as printmatrix
 
 import heapq
 import copy
@@ -122,9 +122,9 @@ def	manhattan_distance(state, puzzle):
 
 def a_star_search(puzzle, start):
 	openset = []
-	closedset = {}
+	seenset = {}
 	heapq.heappush(openset, (start.g + start.h, id(start), start))
-	closedset[get_tuple(start.state)] = start.g
+	seenset[get_tuple(start.state)] = start.g
 	global TIME
 	global SPACE
 
@@ -134,17 +134,13 @@ def a_star_search(puzzle, start):
 
 		if current.h == 0:
 			return current
-		
-		# if current is not start and current.parent.h == 2 and not current.h < 2: # this only works with the manhattan distance heuristic
-		# 	print ("can't be solved")
-		# 	return None
 
 		for matrix in current.get_neighbours():
 			move = State(matrix, puzzle)
 			move.g = current.g + G
 			key = get_tuple(move.state)
-			if key not in closedset or move.g < closedset[key]:
-				closedset[key] = move.g
+			if key not in seenset or move.g < seenset[key]:
+				seenset[key] = move.g
 				heapq.heappush(openset, (move.g + move.h, id(move), move))
 				move.parent = current
 				SPACE += 1
@@ -157,8 +153,9 @@ def	print_solution(solution, start):
 	if solution is not start:
 		MOVES += 1
 		print_solution(solution.parent, start)
-	print (np.matrix(solution.state))
+	print (printmatrix(solution.state))
 	print ()
+
 
 #	testing
 
@@ -183,7 +180,7 @@ solution = a_star_search(puzzle, start)
 #	output
 
 # while solution is not start:
-# 	print (np.matrix(solution.state))
+# 	print (printmatrix(solution.state))
 # 	MOVES += 1
 # 	solution = solution.parent
 print_solution(solution, start)
