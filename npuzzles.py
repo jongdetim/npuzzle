@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/12/28 22:31:55 by tide-jon      ########   odam.nl          #
+#    Updated: 2019/12/28 23:03:41 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -68,16 +68,14 @@ class	State():
 				x2, y2 = x + 1, y
 				while y2 < puzzle.size:
 					while x2 < puzzle.size:
-						if self.state[y2][x2] \
-						and not (self.state[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
+						if not (self.state[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
 						and not any(self.state[y2][x2] in row for row in puzzle.goal_array[(puzzle.goal[item])[0]+1:][:]):
 							inversions += 1
 						x2 += 1
 					y2 += 1
 					x2 = 0
-				print (item, inversions)
-		if (puzzle.size % 2 == 1 and (inversions % 2 is (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2 or \
-			(puzzle.size % 2 == 0 and inversions % 2 is not abs(zero_col - (puzzle.goal[0])[1]) % 2))):
+		if (puzzle.size % 2 == 1 and (inversions % 2 is (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2)) or \
+			(puzzle.size % 2 == 0 and (inversions % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2)):
 			return True
 		return False
 		
@@ -160,32 +158,30 @@ def	print_solution(solution, start):
 	print (printmatrix(solution.state))
 	print ()
 
-
+#___________________________________________________________________________________________________
 #	testing
 
-puzzle = Puzzle(5)
+puzzle = Puzzle(3)
 puzzle.get_goal()
-# start = State([[2, 1, 3], [4, 5, 6], [7, 0, 8]], puzzle)
-# start = State([[1, 2, 3, 4], [12, 14, 5, 0], [11, 13, 15, 6], [10, 9, 8, 7]], puzzle)
-start = State([[1,2,3,18,5],[16,17,22,4,6],[15,24,19,21,7],[14,11,0,20,8],[13,23,12,10,9]], puzzle)
+start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
+# start = State([[1, 2, 3, 4], [12, 0, 14, 5], [11, 13, 6, 7], [10, 15, 9, 8]], puzzle)
+# start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
 
+#___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
 
 if not start.can_be_solved():
 	print ("can't be solved")
 	quit()
 
+#___________________________________________________________________________________________________
 #	execute the algorithm
 
 solution = a_star_search(puzzle, start)
 
-
+#___________________________________________________________________________________________________
 #	output
 
-# while solution is not start:
-# 	print (printmatrix(solution.state))
-# 	MOVES += 1
-# 	solution = solution.parent
 print_solution(solution, start)
-# print (np.matrix(solution.state))
+
 print ("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
