@@ -11,6 +11,7 @@
 # **************************************************************************** #
 
 from numpy import matrix as printmatrix
+from random import choice
 
 import heapq
 import copy
@@ -39,6 +40,11 @@ class	Puzzle:
 		for y, _ in enumerate(self.goal_array):
 			for x, _ in enumerate(self.goal_array[y]):
 				self.goal[self.goal_array[y][x]] = (y, x)
+
+	def shuffle(self, state, amount):
+		for _ in range(amount):
+			state = State(choice(state.get_neighbours()), self)
+		return state
 
 class	State():
 
@@ -74,8 +80,7 @@ class	State():
 						x2 += 1
 					y2 += 1
 					x2 = 0
-		if (puzzle.size % 2 == 1 and (inversions % 2 is (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2)) or \
-			(puzzle.size % 2 == 0 and (inversions % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2)):
+		if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
 			return True
 		return False
 		
@@ -114,7 +119,7 @@ def	manhattan_distance(state, puzzle):
 	h = 0
 	for y, _ in enumerate(state):
 		for x, _ in enumerate(state[y]):
-			if state[y][x] is not 0:
+			if state[y][x]:
 				y2, x2 = puzzle.goal[state[y][x]]
 				h += abs(x - x2) + abs(y - y2)
 	return h
@@ -166,6 +171,7 @@ puzzle.get_goal()
 start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
 # start = State([[1, 2, 3, 4], [12, 0, 14, 5], [11, 13, 6, 7], [10, 15, 9, 8]], puzzle)
 # start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
+start = puzzle.shuffle(start, 30)
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
