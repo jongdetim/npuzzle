@@ -152,7 +152,7 @@ def a_star_search(puzzle, start):
 				heapq.heappush(openset, (move.g + move.h, id(move), move))
 				move.parent = current
 
-	print ("can't be solved")
+	print("can't be solved")
 	return None
 
 def	print_solution(solution, start):
@@ -160,24 +160,39 @@ def	print_solution(solution, start):
 	if solution is not start:
 		MOVES += 1
 		print_solution(solution.parent, start)
-	print (printmatrix(solution.state))
-	print ()
+	print(printmatrix(solution.state))
+	print()
 
 #___________________________________________________________________________________________________
 #	testing
 
-puzzle = Puzzle(3)
-puzzle.get_goal()
-start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
+
+# start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
 # start = State([[1, 2, 3, 4], [12, 0, 14, 5], [11, 13, 6, 7], [10, 15, 9, 8]], puzzle)
 # start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
-start = puzzle.shuffle(start, 30)
+
+#___________________________________________________________________________________________________
+#	we read user input to determine the size and amount of shuffles
+
+puzzle_size = input("please enter the n size of an n x n puzzle:\n")
+if not puzzle_size.isdigit():
+	print("wrong input. please enter a number")
+	quit()
+puzzle = Puzzle(int(puzzle_size))
+puzzle.get_goal()
+start = State(puzzle.goal_array, puzzle)
+
+shuffles_amount = input("how many times should the puzzle be shuffled?\n")
+if not shuffles_amount.isdigit():
+	print("wrong input. please enter a number")
+	quit()
+start = puzzle.shuffle(start, int(shuffles_amount))
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
 
 if not start.can_be_solved():
-	print ("can't be solved")
+	print("can't be solved")
 	quit()
 
 #___________________________________________________________________________________________________
@@ -190,4 +205,4 @@ solution = a_star_search(puzzle, start)
 
 print_solution(solution, start)
 
-print ("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
+print("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
