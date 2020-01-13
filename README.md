@@ -19,8 +19,8 @@ At the end of the search, the program prints the following:<br/>
 
 **Possible improvements:**
 
-~~- Take user input to determine the puzzle starting position
-- Implement a scrambler to create random starting positions~~
+- ~~Take user input to determine the puzzle starting position~~
+- ~~Implement a scrambler to create random starting positions~~
 - Replace array structures for NumPy arrays for better memory and time usage
 - Implement alternative (admissible) heuristics, such as inverse distance, euclidian distance, walking distance
 - Use iterative deepening with the A* algorithm to reduce space complexity considerably
