@@ -1,12 +1,12 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         ::::::::             #
-#    npuzzles.py                                        :+:    :+:             #
+#    npuzzle.py                                         :+:    :+:             #
 #                                                      +:+                     #
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/12/28 23:03:41 by tide-jon      ########   odam.nl          #
+#    Updated: 2020/01/13 16:21:37 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,7 +80,7 @@ class	State():
 						x2 += 1
 					y2 += 1
 					x2 = 0
-		if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
+		if (inversions + puzzle.size) % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
 			return True
 		return False
 		
@@ -163,30 +163,36 @@ def	print_solution(solution, start):
 	print(printmatrix(solution.state))
 	print()
 
-#___________________________________________________________________________________________________
-#	testing
-
-
-# start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
-# start = State([[1, 2, 3, 4], [12, 0, 14, 5], [11, 13, 6, 7], [10, 15, 9, 8]], puzzle)
-# start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
 
 #___________________________________________________________________________________________________
 #	we read user input to determine the size and amount of shuffles
 
+game_type = input("choose '1' to randomly shuffle the puzzle, or choose '2' to set the puzzle state manually\n")
+while not game_type == '1' and not game_type == '2':
+	game_type = input("wrong input. please enter either 1 or 2:\n")
 puzzle_size = input("please enter the n size of an n x n puzzle:\n")
-if not puzzle_size.isdigit():
-	print("wrong input. please enter a number")
-	quit()
+while not puzzle_size.isdigit():
+	puzzle_size = input("wrong input. please enter a number:\n")
 puzzle = Puzzle(int(puzzle_size))
 puzzle.get_goal()
-start = State(puzzle.goal_array, puzzle)
-
-shuffles_amount = input("how many times should the puzzle be shuffled?\n")
-if not shuffles_amount.isdigit():
-	print("wrong input. please enter a number")
-	quit()
-start = puzzle.shuffle(start, int(shuffles_amount))
+if game_type == '1':
+	start = State(puzzle.goal_array, puzzle)
+	shuffles_amount = input("how many times should the puzzle be shuffled?\n")
+	while not shuffles_amount.isdigit():
+		shuffles_amount = input("wrong input. please enter a number\n")
+	start = puzzle.shuffle(start, int(shuffles_amount))
+else:
+	print("please input your puzzle state, piece by piece from top left to bottomright:")
+	arr = [[] for i in range(int(puzzle_size))]
+	row = 0
+	for i in range(int(puzzle_size) ** 2):
+		piece = input()
+		while not piece.isdigit():
+			piece = puzzle_size = input("wrong input. please enter a number:\n")
+		arr[row].append(int(piece))
+		if (i + 1) % int(puzzle_size) == 0:
+			row += 1
+	start = State(arr, puzzle)
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
