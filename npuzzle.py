@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2020/01/13 16:21:37 by tide-jon      ########   odam.nl          #
+#    Updated: 2020/01/13 18:12:44 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -173,6 +173,9 @@ while not game_type == '1' and not game_type == '2':
 puzzle_size = input("please enter the n size of an n x n puzzle:\n")
 while not puzzle_size.isdigit():
 	puzzle_size = input("wrong input. please enter a number:\n")
+if puzzle_size == '1':
+	print("a one piece puzzle is not a puzzle at all :-)")
+	exit()
 puzzle = Puzzle(int(puzzle_size))
 puzzle.get_goal()
 if game_type == '1':
