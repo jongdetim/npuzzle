@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2020/01/13 18:12:44 by tide-jon      ########   odam.nl          #
+#    Updated: 2020/01/15 12:49:35 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -191,7 +191,7 @@ else:
 	for i in range(int(puzzle_size) ** 2):
 		piece = input()
 		while not piece.isdigit():
-			piece = puzzle_size = input("wrong input. please enter a number:\n")
+			piece = input("wrong input. please enter a number:\n")
 		arr[row].append(int(piece))
 		if (i + 1) % int(puzzle_size) == 0:
 			row += 1
