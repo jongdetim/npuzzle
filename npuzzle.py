@@ -13,6 +13,9 @@
 from numpy import matrix as printmatrix
 from random import choice
 
+from scipy.spatial import distance
+import timeit
+
 import heapq
 import copy
 
@@ -29,14 +32,16 @@ class	Puzzle:
 	def __init__(self, size):
 		self.size = size
 
+	@staticmethod
+	def rotate(rows, cols, x):
+		return ([list(range(x, x + cols))] + \
+		[list(reversed(x)) for x in zip(*Puzzle.rotate(cols, rows - 1, x + cols))]
+		if 0 < cols \
+		else [[0]])
+
 	def get_goal(self):
-		def rotate(rows, cols, x):
-			return ([list(range(x, x + cols))] + \
-			[list(reversed(x)) for x in zip(*rotate(cols, rows - 1, x + cols))]
-			if 0 < cols \
-			else [[0]])
-		self.goal_array = rotate(self.size, self.size, 1)
-		self.goal = {}
+		self.goal_array = Puzzle.rotate(self.size, self.size, 1)
+		self.goal = [None] * (self.size**2)
 		for y, _ in enumerate(self.goal_array):
 			for x, _ in enumerate(self.goal_array[y]):
 				self.goal[self.goal_array[y][x]] = (y, x)
@@ -90,15 +95,21 @@ class	State():
 
 	def get_neighbours(self):
 		y, x = self.find_zero()
+		if self.parent:
+			yp, xp = self.parent.find_zero()
 		neighbour_coords = get_nb_coords(puzzle.size, y, x)
-							
-		neighbours = [copy.deepcopy(self.state) for _ in neighbour_coords]
+		neighbours = []
+
 		for i in range(len(neighbour_coords)):
 			y2, x2 = neighbour_coords[i]
-			neighbours[i][y][x], neighbours[i][y2][x2] = \
+			if self.parent and (y2, x2) == (yp, xp):
+				continue
+			neighbours.append(copy.deepcopy(self.state))
+			neighbours[-1][y][x], neighbours[-1][y2][x2] = \
 			self.state[y2][x2], self.state[y][x]
 
 		return neighbours
+
 
 
 # lambda calculus. --> Does it make sense to use this over a normal function?
@@ -115,10 +126,20 @@ def get_tuple(matrix):
 
 #	our heuristic function
 
+# def	manhattan_distance(state, puzzle):
+# 	h = 0
+# 	for y in range(len(state)):
+# 		for x in range(len(state[y])):
+# 			if state[y][x]:
+# 				y2, x2 = puzzle.goal[state[y][x]]
+# 				h += distance.cityblock([y2, x2],[y, x])
+# 	return h
+
+
 def	manhattan_distance(state, puzzle):
 	h = 0
-	for y, _ in enumerate(state):
-		for x, _ in enumerate(state[y]):
+	for y in range(len(state)):
+		for x in range(len(state[y])):
 			if state[y][x]:
 				y2, x2 = puzzle.goal[state[y][x]]
 				h += abs(x - x2) + abs(y - y2)
@@ -149,7 +170,7 @@ def a_star_search(puzzle, start):
 				if key not in seenset:
 					SPACE += 1
 				seenset[key] = move.g
-				heapq.heappush(openset, (move.g + move.h, id(move), move))
+				heapq.heappush(openset, (move.g + move.h, key, move))
 				move.parent = current
 
 	print("can't be solved")
@@ -169,24 +190,26 @@ def	print_solution(solution, start):
 
 # start = State([[1, 3, 6], [0, 2, 8], [4, 5, 7]], puzzle)
 # start = State([[1, 2, 3, 4], [12, 0, 14, 5], [11, 13, 6, 7], [10, 15, 9, 8]], puzzle)
-# start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
+
 
 #___________________________________________________________________________________________________
 #	we read user input to determine the size and amount of shuffles
 
-puzzle_size = input("please enter the n size of an n x n puzzle:\n")
-if not puzzle_size.isdigit():
-	print("wrong input. please enter a number")
-	quit()
-puzzle = Puzzle(int(puzzle_size))
+# puzzle_size = input("please enter the n size of an n x n puzzle:\n")
+# if not puzzle_size.isdigit():
+# 	print("wrong input. please enter a number")
+# 	quit()
+puzzle = Puzzle(5)
 puzzle.get_goal()
-start = State(puzzle.goal_array, puzzle)
+# start = State(puzzle.goal_array, puzzle)
 
-shuffles_amount = input("how many times should the puzzle be shuffled?\n")
-if not shuffles_amount.isdigit():
-	print("wrong input. please enter a number")
-	quit()
-start = puzzle.shuffle(start, int(shuffles_amount))
+# shuffles_amount = input("how many times should the puzzle be shuffled?\n")
+# if not shuffles_amount.isdigit():
+# 	print("wrong input. please enter a number")
+# 	quit()
+# start = puzzle.shuffle(start, int(shuffles_amount))
+
+start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
