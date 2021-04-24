@@ -10,14 +10,10 @@
 #                                                                              #
 # **************************************************************************** #
 
-from numpy import matrix as printmatrix
 from random import choice
-
-from scipy.spatial import distance
-import timeit
-
 import heapq
-import copy
+from numpy import array as arr, copy, matrix as printmatrix
+
 
 #	move cost G
 G = 1
@@ -31,6 +27,8 @@ class	Puzzle:
 
 	def __init__(self, size):
 		self.size = size
+		self.goal_array = Puzzle.rotate(self.size, self.size, 1)
+		self.goal = [None] * (self.size**2)
 
 	@staticmethod
 	def rotate(rows, cols, x):
@@ -40,75 +38,81 @@ class	Puzzle:
 		else [[0]])
 
 	def get_goal(self):
-		self.goal_array = Puzzle.rotate(self.size, self.size, 1)
-		self.goal = [None] * (self.size**2)
 		for y, _ in enumerate(self.goal_array):
 			for x, _ in enumerate(self.goal_array[y]):
 				self.goal[self.goal_array[y][x]] = (y, x)
 
 	def shuffle(self, state, amount):
 		for _ in range(amount):
-			state = State(choice(state.get_neighbours()), self)
+			neighbour, zero_loc = choice(state.get_neighbours())
+			state = State(neighbour, self)
+			state.zero_tile = zero_loc
 		return state
 
 class	State():
 
 	def __init__(self, matrix, puzzle):
-		self.state = matrix
+		self.matrix = matrix
 		self.parent = 0
-		self.h = manhattan_distance(matrix, puzzle)
+		# self.h = manhattan_distance(matrix, puzzle.goal)
 		self.g = 0
+		self.zero_tile = 0
 
 	def find_zero(self):
 		y = 0
-		while y < len(self.state):
+		while y < len(self.matrix):
 			x = 0
-			while x < len(self.state[y]):
-				if self.state[y][x] == 0:
+			while x < len(self.matrix[y]):
+				if self.matrix[y][x] == 0:
 					return y, x
 				x += 1
 			y += 1
 	
-	def can_be_solved(self):
-		inversions = 0
-		for y, _ in enumerate(self.state):
-			for x, item in enumerate(self.state[y]):
-				if item == 0:
-					zero_row = y
-					zero_col = x
-				x2, y2 = x + 1, y
-				while y2 < puzzle.size:
-					while x2 < puzzle.size:
-						if not (self.state[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
-						and not any(self.state[y2][x2] in row for row in puzzle.goal_array[(puzzle.goal[item])[0]+1:][:]):
-							inversions += 1
-						x2 += 1
-					y2 += 1
-					x2 = 0
-		if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
-			return True
-		return False
+	# def can_be_solved(self):
+	# 	inversions = 0
+	# 	for y, _ in enumerate(self.matrix):
+	# 		for x, item in enumerate(self.matrix[y]):
+	# 			if item == 0:
+	# 				zero_row = y
+	# 				zero_col = x
+	# 			x2, y2 = x + 1, y
+	# 			while y2 < puzzle.size:
+	# 				while x2 < puzzle.size:
+	# 					if not (self.matrix[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
+	# 					and not any(self.matrix[y2][x2] in row for row in puzzle.goal_array[(puzzle.goal[item])[0]+1:][:]):
+	# 						inversions += 1
+	# 					x2 += 1
+	# 				y2 += 1
+	# 				x2 = 0
+	# 	if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
+	# 		return True
+	# 	return False
 		
 
  #	function to generate and return neighbour states
  #	<replace array structures for NumPy arrays for better memory and time usage>
 
 	def get_neighbours(self):
-		y, x = self.find_zero()
+		y, x = self.zero_tile
 		if self.parent:
-			yp, xp = self.parent.find_zero()
+			yp, xp = self.parent.zero_tile
 		neighbour_coords = get_nb_coords(puzzle.size, y, x)
 		neighbours = []
+		zero_locs = []
 
 		for i in range(len(neighbour_coords)):
 			y2, x2 = neighbour_coords[i]
 			if self.parent and (y2, x2) == (yp, xp):
 				continue
-			neighbours.append(copy.deepcopy(self.state))
+			# neighbours.append([row[:] for row in self.matrix])
+			neighbours.append(copy(self.matrix))
+			
 			neighbours[-1][y][x], neighbours[-1][y2][x2] = \
-			self.state[y2][x2], self.state[y][x]
+			self.matrix[y2][x2], self.matrix[y][x]
 
-		return neighbours
+			zero_locs.append((y2, x2))
+			# print('made a copy')
+		return tuple(zip(neighbours, zero_locs))
 
 
 
@@ -121,10 +125,10 @@ get_nb_coords =	lambda size, y, x: \
 
 #	turns 2d list into tuples to use as a dictionary key
 
-def get_tuple(matrix):
-	return tuple(tuple(line) for line in matrix)
+# def get_tuple(matrix):
+# 	return tuple(tuple(line) for line in matrix)
 
-#	our heuristic function
+#	our heuristic functions
 
 # def	manhattan_distance(state, puzzle):
 # 	h = 0
@@ -136,53 +140,78 @@ def get_tuple(matrix):
 # 	return h
 
 
-def	manhattan_distance(state, puzzle):
+def	manhattan_distance(matrix, goal):
 	h = 0
-	for y in range(len(state)):
-		for x in range(len(state[y])):
-			if state[y][x]:
-				y2, x2 = puzzle.goal[state[y][x]]
+	for y in range(len(matrix)):
+		for x in range(len(matrix[y])):
+			if matrix[y][x]:
+				y2, x2 = goal[matrix[y][x]]
 				h += abs(x - x2) + abs(y - y2)
 	return h
+
+def manhattan_dist_single(state, goal):
+	h = state.parent.h
+
+	# add the NEW h of last moved tile
+	y, x = state.parent.zero_tile
+	tile = state.matrix[y][x]
+	y2, x2 = goal[tile]
+	h += abs(x - x2) + abs(y - y2)
+
+	# remove the PREVIOUS h of last moved tile
+	y, x = state.zero_tile
+	tile = state.parent.matrix[y][x]
+	y2, x2 = goal[tile]
+	h -= abs(x - x2) + abs(y - y2)
+
+	return h
+
+
 
 #	implementation of a* algorithm:
 
 def a_star_search(puzzle, start):
 	openset = []
 	seenset = {}
-	heapq.heappush(openset, (start.g + start.h, id(start), start))
-	seenset[get_tuple(start.state)] = start.g
+	tiebreaker = 0
+	heapq.heappush(openset, (start.g + start.h, start.h, tiebreaker, start))
+	seenset[start.matrix.tobytes()] = start.g
 	global TIME
 	global SPACE
+	
 
 	while len(openset) > 0:
-		current = heapq.heappop(openset)[2]
+		# print('checking a node')
+		current = heapq.heappop(openset)[3]
 		TIME += 1
 
 		if current.h == 0:
 			return current
 
-		for matrix in current.get_neighbours():
+		for matrix, zero_loc in current.get_neighbours():
 			move = State(matrix, puzzle)
+			move.zero_tile = zero_loc
+			move.parent = current
+			move.h = manhattan_dist_single(move, puzzle.goal)
 			move.g = current.g + G
-			key = get_tuple(move.state)
-			if key not in seenset or move.g < seenset[key]:
-				if key not in seenset:
+			key = (move.matrix.tobytes())
+			seen = key in seenset
+			if not seen or move.g < seenset[key]:
+				if not seen:
 					SPACE += 1
 				seenset[key] = move.g
-				heapq.heappush(openset, (move.g + move.h, key, move))
-				move.parent = current
-
+				heapq.heappush(openset, (move.g + move.h, move.h, tiebreaker, move))
+				tiebreaker += 1
+				
 	print("can't be solved")
-	return None
+	exit()
 
 def	print_solution(solution, start):
 	global MOVES
 	if solution is not start:
 		MOVES += 1
 		print_solution(solution.parent, start)
-	print(printmatrix(solution.state))
-	print()
+	print(printmatrix(solution.matrix), '\n')
 
 #___________________________________________________________________________________________________
 #	testing
@@ -196,27 +225,39 @@ def	print_solution(solution, start):
 #	we read user input to determine the size and amount of shuffles
 
 # puzzle_size = input("please enter the n size of an n x n puzzle:\n")
-# if not puzzle_size.isdigit():
+# while not puzzle_size.isdigit() or not 1 <= int(puzzle_size) <= 100:
 # 	print("wrong input. please enter a number")
-# 	quit()
-puzzle = Puzzle(5)
-puzzle.get_goal()
+# 	puzzle_size = input("please enter the n size of an n x n puzzle:\n")
+# puzzle_size = 5
+# shuffles_amount = 125
+# puzzle = Puzzle(int(puzzle_size))
+# puzzle.get_goal()
 # start = State(puzzle.goal_array, puzzle)
 
 # shuffles_amount = input("how many times should the puzzle be shuffled?\n")
 # if not shuffles_amount.isdigit():
 # 	print("wrong input. please enter a number")
 # 	quit()
+
+# start.zero_tile = start.find_zero()
+
 # start = puzzle.shuffle(start, int(shuffles_amount))
 
-start = State([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,20,0,12]], puzzle)
+# start.parent = 0
+# start.h = manhattan_distance(start.matrix, puzzle.goal)
+
+puzzle = Puzzle(int(5))
+puzzle.get_goal()
+start = State(arr([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,0,20,12]]), puzzle)
+start.zero_tile = start.find_zero()
+start.h = manhattan_distance(start.matrix, puzzle.goal)
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
 
-if not start.can_be_solved():
-	print("can't be solved")
-	quit()
+# if not start.can_be_solved():
+# 	print("can't be solved")
+# 	quit()
 
 #___________________________________________________________________________________________________
 #	execute the algorithm
