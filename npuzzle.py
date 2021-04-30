@@ -1,22 +1,22 @@
 # **************************************************************************** #
 #                                                                              #
 #                                                         ::::::::             #
-#    npuzzles.py                                        :+:    :+:             #
+#    npuzzle.py                                         :+:    :+:             #
 #                                                      +:+                     #
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
-#    Created: 2019/11/25 13:33:51 by tide-jon       #+#    #+#                 #
-#    Updated: 2019/12/28 23:03:41 by tide-jon      ########   odam.nl          #
+#    Created: 2019/11/25 13:33:51 by tide-jon      #+#    #+#                  #
+#    Updated: 2021/04/30 19:21:32 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 from random import choice
 import heapq
 from numpy import array as arr, copy, matrix as printmatrix
-
+from parse_args import parse_args
 
 #	move cost G
-G = 1
+# G = 1
 
 #	performance tracking
 TIME = 0
@@ -54,7 +54,10 @@ class	State():
 	def __init__(self, matrix, puzzle):
 		self.matrix = matrix
 		self.parent = 0
-		# self.h = manhattan_distance(matrix, puzzle.goal)
+		self.h_total = 0
+		self.h_misplaced = 0
+		self.h_manhattan = 0
+		self.h_linear = 0
 		self.g = 0
 		self.zero_tile = 0
 
@@ -68,29 +71,28 @@ class	State():
 				x += 1
 			y += 1
 	
-	# def can_be_solved(self):
-	# 	inversions = 0
-	# 	for y, _ in enumerate(self.matrix):
-	# 		for x, item in enumerate(self.matrix[y]):
-	# 			if item == 0:
-	# 				zero_row = y
-	# 				zero_col = x
-	# 			x2, y2 = x + 1, y
-	# 			while y2 < puzzle.size:
-	# 				while x2 < puzzle.size:
-	# 					if not (self.matrix[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
-	# 					and not any(self.matrix[y2][x2] in row for row in puzzle.goal_array[(puzzle.goal[item])[0]+1:][:]):
-	# 						inversions += 1
-	# 					x2 += 1
-	# 				y2 += 1
-	# 				x2 = 0
-	# 	if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
-	# 		return True
-	# 	return False
+	def can_be_solved(self):
+		inversions = 0
+		for y, _ in enumerate(self.matrix):
+			for x, item in enumerate(self.matrix[y]):
+				if item == 0:
+					zero_row = y
+					zero_col = x
+				x2, y2 = x + 1, y
+				while y2 < puzzle.size:
+					while x2 < puzzle.size:
+						if not (self.matrix[y2][x2] in puzzle.goal_array[(puzzle.goal[item])[0]][puzzle.goal[item][1]:]) \
+						and not any(self.matrix[y2][x2] in row for row in puzzle.goal_array[(puzzle.goal[item])[0]+1:][:]):
+							inversions += 1
+						x2 += 1
+					y2 += 1
+					x2 = 0
+		if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
+			return True
+		return False
 		
 
  #	function to generate and return neighbour states
- #	<replace array structures for NumPy arrays for better memory and time usage>
 
 	def get_neighbours(self):
 		y, x = self.zero_tile
@@ -139,18 +141,43 @@ get_nb_coords =	lambda size, y, x: \
 # 				h += distance.cityblock([y2, x2],[y, x])
 # 	return h
 
+def	misplaced_tiles(matrix, goal):
+	h = 0
+	for y, _ in enumerate(matrix):
+		for x, _ in enumerate(matrix[y]):
+			num = matrix[y][x]
+			if num and (y, x) != goal[num]:
+				h += 1
+	return h
+
+def	misplaced_tile_single(state, goal):
+	h = state.parent.h_misplaced
+
+	# add the NEW h of last moved tile
+	y, x = state.parent.zero_tile
+	tile = state.matrix[y][x]
+	y2, x2 = goal[tile]
+	h += (y, x) != (y2, x2)
+
+	# remove the PREVIOUS h of last moved tile
+	y, x = state.zero_tile
+	tile = state.parent.matrix[y][x]
+	y2, x2 = goal[tile]
+	h -= (y, x) != (y2, x2)
+
+	return h
 
 def	manhattan_distance(matrix, goal):
 	h = 0
-	for y in range(len(matrix)):
-		for x in range(len(matrix[y])):
+	for y, _ in enumerate(matrix):
+		for x, _ in enumerate(matrix[y]):
 			if matrix[y][x]:
 				y2, x2 = goal[matrix[y][x]]
 				h += abs(x - x2) + abs(y - y2)
 	return h
 
 def manhattan_dist_single(state, goal):
-	h = state.parent.h
+	h = state.parent.h_manhattan
 
 	# add the NEW h of last moved tile
 	y, x = state.parent.zero_tile
@@ -166,6 +193,14 @@ def manhattan_dist_single(state, goal):
 
 	return h
 
+def	get_optimized_heuristics(state, goal):
+	if MISPLACED:
+		state.h_misplaced = misplaced_tile_single(state, goal)
+	if MANHATTAN:
+		state.h_manhattan = manhattan_dist_single(state, puzzle.goal)
+	if LINEAR_CONFLICT:
+		pass
+	state.h_total = state.h_misplaced + state.h_manhattan + state.h_linear
 
 
 #	implementation of a* algorithm:
@@ -174,7 +209,7 @@ def a_star_search(puzzle, start):
 	openset = []
 	seenset = {}
 	tiebreaker = 0
-	heapq.heappush(openset, (start.g + start.h, start.h, tiebreaker, start))
+	heapq.heappush(openset, (start.g + start.h_total, start.h_total, tiebreaker, start))
 	seenset[start.matrix.tobytes()] = start.g
 	global TIME
 	global SPACE
@@ -185,14 +220,14 @@ def a_star_search(puzzle, start):
 		current = heapq.heappop(openset)[3]
 		TIME += 1
 
-		if current.h == 0:
+		if current.h_total == 0:
 			return current
 
 		for matrix, zero_loc in current.get_neighbours():
 			move = State(matrix, puzzle)
 			move.zero_tile = zero_loc
 			move.parent = current
-			move.h = manhattan_dist_single(move, puzzle.goal)
+			get_optimized_heuristics(move, puzzle.goal)
 			move.g = current.g + G
 			key = (move.matrix.tobytes())
 			seen = key in seenset
@@ -200,7 +235,7 @@ def a_star_search(puzzle, start):
 				if not seen:
 					SPACE += 1
 				seenset[key] = move.g
-				heapq.heappush(openset, (move.g + move.h, move.h, tiebreaker, move))
+				heapq.heappush(openset, (move.g + move.h_total, move.h_total, tiebreaker, move))
 				tiebreaker += 1
 				
 	print("can't be solved")
@@ -246,11 +281,21 @@ def	print_solution(solution, start):
 # start.parent = 0
 # start.h = manhattan_distance(start.matrix, puzzle.goal)
 
+GREEDY, VERBOSE, MISPLACED, MANHATTAN, LINEAR_CONFLICT = parse_args()
+
+G = not GREEDY
+
 puzzle = Puzzle(int(5))
 puzzle.get_goal()
 start = State(arr([[1,2,3,18,5],[16,22,4,6,7],[24,17,19,21,9],[15,14,11,8,10],[13,23,0,20,12]]), puzzle)
 start.zero_tile = start.find_zero()
-start.h = manhattan_distance(start.matrix, puzzle.goal)
+if MISPLACED:
+	start.h_misplaced = misplaced_tiles(start.matrix, puzzle.goal)
+if MANHATTAN:
+	start.h_manhattan = manhattan_distance(start.matrix, puzzle.goal)
+if LINEAR_CONFLICT:
+	pass
+start.h_total = start.h_misplaced + start.h_manhattan + start.h_linear
 
 #___________________________________________________________________________________________________
 #	we first check if the starting state is solveable
