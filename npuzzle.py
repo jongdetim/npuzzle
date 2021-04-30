@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2019/11/25 13:33:51 by tide-jon      #+#    #+#                  #
-#    Updated: 2021/04/30 19:21:32 by tide-jon      ########   odam.nl          #
+#    Updated: 2021/04/30 19:50:07 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -200,6 +200,7 @@ def	get_optimized_heuristics(state, goal):
 		state.h_manhattan = manhattan_dist_single(state, puzzle.goal)
 	if LINEAR_CONFLICT:
 		pass
+
 	state.h_total = state.h_misplaced + state.h_manhattan + state.h_linear
 
 
@@ -216,8 +217,9 @@ def a_star_search(puzzle, start):
 	
 
 	while len(openset) > 0:
-		# print('checking a node')
 		current = heapq.heappop(openset)[3]
+		if VERBOSE and TIME > 1:
+			print('current node heuristic value: ', current.h_total, ' next node: ', openset[0][3].h_total)
 		TIME += 1
 
 		if current.h_total == 0:
