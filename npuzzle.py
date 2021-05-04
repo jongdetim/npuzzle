@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # **************************************************************************** #
 #                                                                              #
 #                                                         ::::::::             #
@@ -12,19 +14,7 @@
 
 from random import choice
 import heapq
-from numpy import array as arr, copy, matrix as printmatrix, array_equal
-from parse_args import parse_args
-
-#	move cost G
-# G = 1
-
-#	performance tracking
-TIME = 0
-SPACE = 0
-MOVES = 0
-
-# delet this
-
+from parse_args import *
 
 class	Puzzle:
 
@@ -90,7 +80,7 @@ class	State():
 						x2 += 1
 					y2 += 1
 					x2 = 0
-		if inversions % 2 + puzzle.size % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
+		if (inversions + puzzle.size) % 2 is not (abs(puzzle.size // 2 - zero_col) + abs(puzzle.size // 2 - zero_row)) % 2:
 			return True
 		return False
 		
@@ -109,7 +99,7 @@ class	State():
 			y2, x2 = neighbour_coords[i]
 			if self.parent and (y2, x2) == (yp, xp):
 				continue
-			neighbours.append(copy(self.matrix))
+			neighbours.append(np.copy(self.matrix))
 			
 			neighbours[-1][y][x], neighbours[-1][y2][x2] = \
 			self.matrix[y2][x2], self.matrix[y][x]
@@ -163,8 +153,6 @@ def	misplaced_tile_single(state, goal):
 
 	# remove the PREVIOUS h of last moved tile
 	y, x = state.zero_tile
-	tile = state.parent.matrix[y][x]
-	y2, x2 = goal[tile]
 	h -= (y, x) != (y2, x2)
 
 	return h
@@ -189,13 +177,11 @@ def manhattan_dist_single(state, goal):
 
 	# remove the PREVIOUS h of last moved tile
 	y, x = state.zero_tile
-	tile = state.parent.matrix[y][x]
-	y2, x2 = goal[tile]
 	h -= abs(x - x2) + abs(y - y2)
 
 	return h
 
-def get_heuristics(state, goal, args):
+def get_heuristics(state, goal):
 	if not args.uniform:
 		if args.misplaced:
 			state.h_misplaced = misplaced_tiles(state.matrix, puzzle.goal)
@@ -206,7 +192,7 @@ def get_heuristics(state, goal, args):
 
 	state.h_total = state.h_misplaced + state.h_manhattan + state.h_linear
 
-def	get_optimized_heuristics(state, goal, args):
+def	get_optimized_heuristics(state, goal):
 	if not args.uniform:
 		if args.misplaced:
 			state.h_misplaced = misplaced_tile_single(state, goal)
@@ -220,7 +206,7 @@ def	get_optimized_heuristics(state, goal, args):
 
 #	implementation of a* algorithm:
 
-def a_star_search(puzzle, start, args):
+def a_star_search(puzzle, start):
 	openset = []
 	seenset = {}
 	tiebreaker = 0
@@ -246,7 +232,7 @@ def a_star_search(puzzle, start, args):
 			move = State(matrix, puzzle)
 			move.zero_tile = zero_loc
 			move.parent = current
-			get_optimized_heuristics(move, puzzle.goal, args)
+			get_optimized_heuristics(move, puzzle.goal)
 			move.g = current.g + G
 			key = (move.matrix.tobytes())
 			seen = key in seenset
@@ -265,7 +251,7 @@ def	print_solution(solution, start):
 	if solution is not start:
 		MOVES += 1
 		print_solution(solution.parent, start)
-	print(printmatrix(solution.matrix), '\n')
+	print(solution.matrix, '\n')
 
 #___________________________________________________________________________________________________
 #	testing
@@ -301,24 +287,17 @@ def	print_solution(solution, start):
 # start.h = manhattan_distance(start.matrix, puzzle.goal)
 
 if __name__ == '__main__':
-		
-	args = parse_args()
 
+	TIME = 0
+	SPACE = 0
+	MOVES = 0
+
+	args = parse_args()
 	G = not args.greedy
 	shuffles_amount = 0
 
 	if args.filepath:
-		try:
-			with open(args.filepath, 'r') as input_file:
-					sudoku_string = sudoku_file.read()
-					try:
-						puzzle_size, start = parse_input(input_file)
-					except:
-						print('input file is not correctly formatted')
-						exit()
-		except:
-			print('no such file: ', args.filepath)
-			exit()
+		puzzle_size, start = parse_file(args.filepath)
 	else:
 		#	we read user input to determine the size and amount of shuffles
 		puzzle_size = input("please enter the n size of an n x n puzzle:\n")
@@ -333,7 +312,9 @@ if __name__ == '__main__':
 
 	puzzle = Puzzle(int(puzzle_size))
 	puzzle.get_goal()
-	if not args.filepath:
+	if args.filepath:
+		start = State(start, puzzle)
+	else:
 		start = State(puzzle.goal_array, puzzle)
 	start.zero_tile = start.find_zero()
 	start = puzzle.shuffle(start, int(shuffles_amount))
@@ -356,9 +337,9 @@ if __name__ == '__main__':
 	#___________________________________________________________________________________________________
 	#	execute the algorithm
 
-	get_heuristics(start, puzzle, args)
+	get_heuristics(start, puzzle)
 
-	solution = a_star_search(puzzle, start, args)
+	solution = a_star_search(puzzle, start)
   
 	#___________________________________________________________________________________________________
 	#	output
