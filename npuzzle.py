@@ -20,11 +20,13 @@ class	Puzzle:
 
 	def __init__(self, size):
 		self.size = size
-		self.goal_array = Puzzle.rotate(self.size, self.size, 1)
+		self.goal_array = np.array(Puzzle.rotate(self.size, self.size, 1), dtype=np.uint16)
 		self.goal = [None] * (self.size**2)
 
 	@staticmethod
 	def rotate(rows, cols, x):
+		if rows == 1 and cols == 1:
+			return [[0]]
 		return ([list(range(x, x + cols))] + \
 		[list(reversed(x)) for x in zip(*Puzzle.rotate(cols, rows - 1, x + cols))]
 		if 0 < cols \
@@ -306,13 +308,18 @@ def a_star_search(puzzle, start):
 	print("can't be solved")
 	exit()
 
-def	print_solution(solution, start):
+def	print_path(solution, start):
 	global MOVES
 	if solution is not start:
 		MOVES += 1
-		print_solution(solution.parent, start)
+		print_path(solution.parent, start)
 	print(solution.matrix, '\n')
 
+def	print_solution(solution, start):
+	np.set_printoptions(linewidth=1000, threshold=10000, )
+	print_path(solution, start)
+	print("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
+	exit()
 
 if __name__ == '__main__':
 
@@ -334,11 +341,16 @@ if __name__ == '__main__':
 			puzzle_size = input("please enter the n size of an n x n puzzle:\n")
 		
 		shuffles_amount = input("how many times should the puzzle be shuffled?\n")
-		if not shuffles_amount.isdigit() or int(shuffles_amount) < 1:
+		while not shuffles_amount.isdigit() or int(shuffles_amount) < 1:
 			print("wrong input. please enter a number above 0")
-			quit()
+			shuffles_amount = input("how many times should the puzzle be shuffled?\n")
 
 	puzzle = Puzzle(int(puzzle_size))
+
+	if puzzle.size == 1:
+		start = goal = State(puzzle.goal_array, puzzle)
+		print_solution(start, goal)
+	
 	puzzle.get_goal()
 	if args.filepath:
 		start = State(start, puzzle)
@@ -353,8 +365,8 @@ if __name__ == '__main__':
 	#	we first check if the starting state is solvable
 
 	if args.filepath and not start.can_be_solved():
-		print("can't be solved")
-		quit()
+			print("can't be solved")
+			quit()
 
 	#___________________________________________________________________________________________________
 	#	execute the algorithm
@@ -365,4 +377,3 @@ if __name__ == '__main__':
 	#	output
 
 	print_solution(solution, start)
-	print("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(MOVES, TIME, SPACE))
