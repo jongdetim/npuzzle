@@ -1,6 +1,16 @@
-import argparse
-import sys
-import numpy as np
+# **************************************************************************** #
+#                                                                              #
+#                                                         ::::::::             #
+#    parse_args.py                                      :+:    :+:             #
+#                                                      +:+                     #
+#    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
+#                                                    +#+                       #
+#    Created: 2021/05/18 17:40:13 by tide-jon      #+#    #+#                  #
+#    Updated: 2021/05/18 17:40:16 by tide-jon      ########   odam.nl          #
+#                                                                              #
+# **************************************************************************** #
+
+import sys, argparse, numpy as np
 
 def	parse_args():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
@@ -29,7 +39,7 @@ def	parse_file(filepath):
 				start = []
 				puzzle_size = None
 				lines = input_file.readlines()
-				for n, line in enumerate(lines):
+				for line in lines:
 					values = []
 					tokens = line.split()
 					for token in tokens:
@@ -46,9 +56,9 @@ def	parse_file(filepath):
 					if values:
 						start.append(values)
 	except Exception as e:
-		handle_error(e, filepath)
+		handle_error(e)
 	
-	start = np.array(start)
+	start = np.array(start, dtype=np.uint16)
 
 	# check if the matrix is the right shape
 	if np.shape(start) != (puzzle_size, puzzle_size):
@@ -60,11 +70,11 @@ def	parse_file(filepath):
 
 	return puzzle_size, start
 
-def	handle_error(error, filepath=None):
+def	handle_error(error):
 	if error == SyntaxError:
 		print('input file is not correctly formatted')
 	elif error == ValueError:
 		print('puzzle size must be between 1 and 100')
 	else:
-		print(error, type(error))
-	exit()
+		print(error)
+	sys.exit()
