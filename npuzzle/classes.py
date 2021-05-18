@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2021/05/18 17:40:10 by tide-jon      #+#    #+#                  #
-#    Updated: 2021/05/18 17:53:12 by tide-jon      ########   odam.nl          #
+#    Updated: 2021/05/18 18:32:35 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,15 +17,14 @@ class	Puzzle:
 
 	def __init__(self, size):
 		self.size = size
-		self.goal_array = np.array(Puzzle.rotate(self.size, self.size, 1), dtype=np.uint16)
+		self.goal_array = np.array(self.rotate(self.size, self.size, 1), dtype=np.uint16)
 		self.goal = [None] * (self.size**2)
 
-	@staticmethod
-	def rotate(rows, cols, x):
+	def rotate(self, rows, cols, x):
 		if rows == 1 and cols == 1:
 			return [[0]]
 		return ([list(range(x, x + cols))] + \
-		[list(reversed(x)) for x in zip(*Puzzle.rotate(cols, rows - 1, x + cols))]
+		[list(reversed(x)) for x in zip(*self.rotate(cols, rows - 1, x + cols))]
 		if 0 < cols \
 		else [[0]])
 
