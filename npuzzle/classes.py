@@ -6,7 +6,7 @@
 #    By: tide-jon <tide-jon@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2021/05/18 17:40:10 by tide-jon      #+#    #+#                  #
-#    Updated: 2021/05/18 17:40:18 by tide-jon      ########   odam.nl          #
+#    Updated: 2021/05/18 17:53:12 by tide-jon      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,7 +65,7 @@ class	State():
 	
 	def can_be_solved(self, puzzle):
 		inversions = 0
-		for y, _ in enumerate(self.matrix):
+		for y in range(len(self.matrix)):
 			for x, item in enumerate(self.matrix[y]):
 				if item == 0:
 					zero_row = y

@@ -54,7 +54,7 @@ def a_star_search(puzzle, start, args):
 				tiebreaker += 1
 				
 	print("can't be solved")
-	exit()
+	sys.exit()
 
 def	print_path(solution, start, moves):
 	if solution is not start:
@@ -67,7 +67,7 @@ def	print_solution(solution, start, time, space):
 	np.set_printoptions(linewidth=1000, threshold=10000, )
 	moves = print_path(solution, start, 0)
 	print("total moves:\t\t%10i\ntime complexity:\t%10i\nspace complexity:\t%10i" %(moves, time, space))
-	exit()
+	sys.exit()
 
 if __name__ == "__main__":
 	args = parse_args()
