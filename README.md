@@ -7,7 +7,7 @@ These are some examples of the snail solution:
 
 ![npuzzle.PNG](https://github.com/jongdetim/npuzzle/blob/master/npuzzle.PNG)
 
-Currently the search uses the Manhattan Distance heuristic to estimate the distance to the goal, and a uniform cost of 1 per additional move.
+Includes a variety of heuristics to estimate the distance to the goal, and a uniform cost of 1 per additional move.
 
 At the end of the search, the program prints the following:<br/>
 1. The ordered sequence of states that make up the solution, according to the search
